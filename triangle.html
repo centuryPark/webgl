@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui">
+  <meta name="format-detection" content="telephone=no, email=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <title>webgl</title>
+</head>
+
+<body>
+  <canvas id='webgl' width='400' height='400'></canvas>
+  <!-- 顶点着色器, 传递参数 -->
+  <script type='x-shader/x-vertex' id='vs-shader'>
+    attribute vec4 a_Position;
+    attribute float a_PointSize;
+    attribute vec4 a_Color;
+    varying vec4 v_FragColor;
+    void main(){
+        gl_Position=a_Position;
+        gl_PointSize=a_PointSize;
+        v_FragColor=a_Color;
+    }
+  </script>
+  <!-- 片段着色器， 【precision mediump float;】这句话是修改精度的，必须有，除了mediump这种中等的精度，还有lowp和highp。 -->
+  <script type='x-shader/x-fragment' id='fs-shader'>
+    precision lowp float;
+    varying vec4 v_FragColor;
+    void main(){
+        gl_FragColor=v_FragColor;
+    }
+</script>
+  <script>
+    var canvas = document.getElementById('webgl');
+    var gl = canvas.getContext('webgl');
+
+
+    //初始化着色器（上面第一步的其实就是这样在用，这里直接写字符串也可以，只不过上面的写法更方便编辑）
+
+    // 顶点着色器
+    var vs_source = document.getElementById('vs-shader').innerHTML;
+    // 片段着色器
+    var fs_source = document.getElementById('fs-shader').innerHTML;
+
+
+    // 创建顶点着色器对象
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    // 绑定资源
+    gl.shaderSource(vertexShader, vs_source);
+    // 编译着色器
+    gl.compileShader(vertexShader);
+
+
+
+    // 创建片段着色器对象
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    // 绑定资源
+    gl.shaderSource(fragmentShader, fs_source);
+    // 编译着色器
+    gl.compileShader(fragmentShader);
+
+
+
+    // 创建一个着色器程序
+    var glProgram = gl.createProgram();
+    // 把前面创建的二个着色器对象添加到着色器程序中
+    gl.attachShader(glProgram, vertexShader);
+    gl.attachShader(glProgram, fragmentShader);
+    // 把着色器程序链接成一个完整的程序
+    gl.linkProgram(glProgram);
+
+    // 顶点着色器:
+
+    //1.创建缓冲区对象，缓冲区设置顶点着色器位置；
+    var vertexBuffer = gl.createBuffer();
+    // 2.绑定缓冲区对象（表明了缓冲区对象的用途）
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    // 3.向缓冲区对象中写入数据
+    var tempData = new Float32Array([
+      0.0, 0.9, 10.0, 1.0, 0.0, 1.0,
+      0.3, 0.0, 20.0, 0.0, 1.0, 0.0,
+      0.0, -0.9, 30.0, 0.0, 0.0, 1.0
+    ]);
+    //这个是每个数据大小，辅助用的
+    var FSIZE = tempData.BYTES_PER_ELEMENT; // 返回元素字节数
+    gl.bufferData(gl.ARRAY_BUFFER, tempData, gl.STATIC_DRAW);
+
+    // 4.获取变量存储位置
+    var a_Position = gl.getAttribLocation(glProgram, 'a_Position');
+    // 5.把缓冲区对象分配给a_Position变量
+    // gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 3, 0);
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 6, 0);
+    // gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+    // 6.连接缓冲区对象和a_Position变量
+    gl.enableVertexAttribArray(a_Position);
+
+    // 传递大小
+    var a_PointSize = gl.getAttribLocation(glProgram, 'a_PointSize');
+    // gl.vertexAttrib1f(a_PointSize, 20.0);
+    gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, FSIZE * 6, FSIZE * 2);
+    gl.enableVertexAttribArray(a_PointSize);
+
+    // 使用这个完整的程序
+    gl.useProgram(glProgram);
+    // 片段着色器：
+    //【传递点的颜色】
+    // var u_FragColor = gl.getUniformLocation(glProgram, 'u_FragColor');
+    // 【传递点的颜色】
+    var a_Color = gl.getAttribLocation(glProgram, 'a_Color');
+    // gl.uniform4f(u_FragColor,1.0,0.0,0.0,1.0);
+    gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
+    gl.enableVertexAttribArray(a_Color);
+
+    // 设置清空颜色
+    gl.clearColor(0, 0, 0, 1.0);
+    // 用设置的颜色清空屏幕（参数代表的是清除颜色缓冲）
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // 绘制点
+    // gl.drawArrays(gl.POINTS, 0, 3);
+    // 绘制三角形
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3)
+    // 绘制折线
+    // gl.drawArrays(gl.LINE_STRIP, 0, 3)
+    // 绘制折线（闭环）
+    // gl.drawArrays(gl.LINE_LOOP, 0, 3)
+  </script>
+</body>
+
+</html>

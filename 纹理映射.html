@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>WebGL-动画</title>
+</head>
+
+<body onload="main()">
+  <p>
+    背景是jpg格式，任务为png格式，在两个纹理颜色叠加时，优先使用人物的颜色
+  </p>
+  <canvas id="container" width="800px" height="720px"></canvas>
+  <script>
+    var vertexShaderSrc = `
+    attribute vec4 a_Position;
+    attribute vec2 a_TexCoord;
+    varying vec2 v_TexCoord;
+    void main(){
+      gl_Position = a_Position;
+      v_TexCoord = a_TexCoord;
+    }`;
+    // 片段着色器源码
+    var fragmentShaderSrc = `
+    precision mediump float;// 必须声明浮点数精度，否则会出错
+    uniform sampler2D u_Sampler;
+    varying vec2 v_TexCoord;
+    void main(){
+      gl_FragColor = texture2D(u_Sampler, v_TexCoord);
+    }`;
+    // 初始化使用的shader
+    function initShader(gl) {
+      var vertexShader = gl.createShader(gl.VERTEX_SHADER);// 创建顶点着色器
+      gl.shaderSource(vertexShader, vertexShaderSrc);// 绑定顶点着色器源码
+      gl.compileShader(vertexShader);// 编译定点着色器
+      var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);// 创建片段着色器
+      gl.shaderSource(fragmentShader, fragmentShaderSrc);// 绑定片段着色器源码
+      gl.compileShader(fragmentShader);// 编译片段着色器
+      var shaderProgram = gl.createProgram();// 创建着色器程序
+      gl.attachShader(shaderProgram, vertexShader);// 指定顶点着色器
+      gl.attachShader(shaderProgram, fragmentShader);// 指定片段着色色器
+      gl.linkProgram(shaderProgram);// 链接程序
+      gl.useProgram(shaderProgram);//使用着色器
+      gl.program = shaderProgram;
+    }
+
+    function initVertexBuffers(gl) {
+      var verticesTexCoords = new Float32Array([
+        // 顶点坐标 对应的纹理坐标
+        -1.0, 1.0, 0.0, 1.0,
+        -1.0, -1.0, 0.0, 0.0,
+        1.0, 1.0, 1.0, 1.0,
+        1.0, -1.0, 1.0, 0.0
+      ]);
+      var FSIZE = verticesTexCoords.BYTES_PER_ELEMENT;
+      var vertexColorBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, verticesTexCoords, gl.STATIC_DRAW);
+      var a_Position = gl.getAttribLocation(gl.program, "a_Position");
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 4, 0);
+      gl.enableVertexAttribArray(a_Position);
+      var a_TexCoord = gl.getAttribLocation(gl.program, "a_TexCoord");
+      gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, FSIZE * 4, FSIZE * 2);
+      gl.enableVertexAttribArray(a_TexCoord);
+      return verticesTexCoords.length / 4;
+    }
+
+    function initTextures(gl, n) {
+      var u_Sampler = gl.getUniformLocation(gl.program, "u_Sampler");
+      var u_Sampler1 = gl.getUniformLocation(gl.program, "u_Sampler1");
+      var image = new Image();
+      var image1 = new Image();
+      image.onload = function () {
+        loadTexture(gl, n, u_Sampler, image);
+      };
+      image.src = "./img/1.jpg";
+    }
+
+    function loadTexture(gl, n, u_Sampler, image) {
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);// 图像坐标与纹理坐标Y轴方向相反，需进行Y轴反转
+      var texture = gl.createTexture();// 创建纹理
+      gl.activeTexture(gl.TEXTURE0);// 激活0号纹理单元（0号是默认激活的纹理单元）
+      gl.bindTexture(gl.TEXTURE_2D, texture);// 绑定纹理对象到激活的纹理单元
+      // 配置纹理参数
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);// 纹理放大方式
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);// 纹理缩小方式
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);// 纹理水平填充方式
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);// 纹理垂直填充方式
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);// 配置纹理图像
+      gl.uniform1i(u_Sampler, 0);// 将0号纹理传递给着色器
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
+    }
+  </script>
+  <script>
+    function main() {
+      var canvas = document.getElementById("container");
+      var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      initShader(gl);// 初始化着色器
+      var n = initVertexBuffers(gl);
+      initTextures(gl, n);
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui">
+  <meta name="format-detection" content="telephone=no, email=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <title>webgl</title>
+</head>
+
+<body>
+  <canvas id='webgl' width='400' height='400'></canvas>
+  <!-- 顶点着色器 -->
+  <script type='x-shader/x-vertex' id='vs-shader'>
+  void main(){
+      gl_Position=vec4(0.0,0.0,0.0,1.0);
+      gl_PointSize=50.0;
+  }
+  </script>
+  <!-- 片段着色器 -->
+  <script type='x-shader/x-fragment' id='fs-shader'>
+  void main(){
+      gl_FragColor=vec4(1.0,0.0,0.0,1.0);
+  }
+</script>
+  <script>
+    var canvas = document.getElementById('webgl');
+    var gl = canvas.getContext('webgl');
+    //初始化着色器（上面第一步的其实就是这样在用，这里直接写字符串也可以，只不过上面的写法更方便编辑）
+    // 顶点着色器
+    var vs_source = document.getElementById('vs-shader').innerHTML;
+    // 片段着色器
+    var fs_source = document.getElementById('fs-shader').innerHTML;
+
+
+    // 创建顶点着色器对象
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    // 绑定资源
+    gl.shaderSource(vertexShader, vs_source);
+    // 编译着色器
+    gl.compileShader(vertexShader);
+
+
+
+    // 创建片段着色器对象
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    // 绑定资源
+    gl.shaderSource(fragmentShader, fs_source);
+    // 编译着色器
+    gl.compileShader(fragmentShader);
+
+
+
+    // 创建一个着色器程序
+    var glProgram = gl.createProgram();
+    // 把前面创建的二个着色器对象添加到着色器程序中
+    gl.attachShader(glProgram, vertexShader);
+    gl.attachShader(glProgram, fragmentShader);
+    // 把着色器程序链接成一个完整的程序
+    gl.linkProgram(glProgram);
+    // 使用这个完整的程序
+    gl.useProgram(glProgram);
+    // 设置清空颜色
+    gl.clearColor(0, 0, 0, 1.0);
+    // 用设置的颜色清空屏幕（参数代表的是清除颜色缓冲）
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, 1);
+  </script>
+</body>
+
+</html>
